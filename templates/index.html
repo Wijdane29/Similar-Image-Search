@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Box</title>
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+         #customDialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(to bottom right, hsl(158, 36%, 37%),beige);
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            width: 550px;
+            height: 200px;
+            border-radius: 15px;
+            margin-left: -25px;
+            text-align: center;
+        }
+
+        /* Styles for the overlay background */
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 999;
+        }
+        #customDialog input[type="file"] {
+            width: 100%;
+            margin-top: 24px;
+            margin-left: 20px;
+            color: black;
+            font-family: 'Playfair Display', serif;
+	font-size: 13px;
+    font-weight: 500;
+        }
+
+#customDialog button {
+    margin-top: 20px;
+margin-left: 20px;
+  width: 80px;
+  height: 35px;
+  border-radius: 10px;
+  background-color: transparent;
+  color: black;
+  border: 0.5px solid linear-gradient(to bottom right, beige, hsl(158, 36%, 37%), beige);
+  cursor: pointer;
+}
+
+#customDialog button:hover {
+    background: linear-gradient(to bottom right, hsl(158, 36%, 37%), beige, hsl(158, 36%, 37%));
+    transform: scale(1.05); 
+    
+}
+    </style>
+</head>
+<body>
+
+    
+    <div class="container">
+        <h5 class="searchbox">Related Product Finder</h5>
+        <img src="static/logo.png" class="logo">
+        <div class="box">
+            <i class="fa fa-search" aria-hidden="true" ></i>
+            <img src="static/camera.png" alt="Icon Image" onclick="showCustomDialog()" >
+        </div>
+    <h1 id="uploadedImage" style="margin-left: 40%; color: black;"></h1>
+
+    <div id="uploadedImageDiv">
+
+        <img id="uploadedIMAGE" onclick="showCustomDialog() " style="margin-left: 40px;"  >
+    </div>
+    <h1 id="uploadedImageTitle" style="margin-left: 15px; 
+    color: rgb(0, 0, 0);
+    margin-top: 10px;
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    "></h1>
+
+
+    <!-- Custom Dialog -->
+    <div id="overlay" onclick="closeCustomDialog()"></div>
+    <div id="customDialog">
+        <h5 class="searchbox2">Search By Image</h5>
+        <input type="file" name="file" id="file" accept="image/*" class="form-control-file"  >
+        <button onclick="searchAction()" class="btn1">Search</button>
+        <button onclick="closeCustomDialog()">Close</button>
+    </div>
+    
+    <div class="ligne"></div>
+
+    <div id="searchResults"  style="margin-left: 40px;">
+
+        <!-- Placeholder for displaying search results -->
+    </div>
+
+    <script>
+        function showCustomDialog() {
+            document.getElementById('customDialog').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+    
+        function closeCustomDialog() {
+            document.getElementById('customDialog').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+    
+        function searchAction() {
+            var input = document.getElementById('file');
+            var file = input.files[0];
+            if (file) {
+                var uploaded = document.getElementById('uploadedImage');
+                var uploadeddiv = document.getElementById('uploadedIMAGE');
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                var uploadedImageDiv = document.getElementById('uploadedImageDiv');
+                uploadedImageDiv.innerHTML = ''; 
+               uploadedImageDiv.appendChild(uploadeddiv);
+                var formData = new FormData();
+                formData.append('file', file);
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', 'http://127.0.0.1:5000/process_image', true);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        displaySearchResults(response);
+                    } else {
+                        console.error('Erreur de la requête:', xhr.statusText);
+                    }
+                };
+                xhr.send(formData);
+            }
+            closeCustomDialog();
+        }
+
+        function displaySearchResults(response) {
+        var searchResultsDiv = document.getElementById('searchResults');
+        var titre = document.getElementById('uploadedImageTitle');
+        searchResultsDiv.innerHTML = '';
+        titre.textContent = 'Explore these related products based on your selected choice:';
+
+
+    if (response && response.similar_images) {
+
+        response.similar_images.forEach(function (imgPath, index) {
+
+            var imgElement = document.createElement('img');
+            imgElement.src = imgPath;
+            imgElement.alt = 'Similar Image ' + (index + 1);
+            imgElement.style.width = '250px'; 
+            imgElement.style.height = '250px'; 
+            imgElement.style.margin = '20px'; 
+            searchResultsDiv.appendChild(imgElement);
+            console.log('Image Path:', imgPath);
+
+
+        });
+    } else {
+        searchResultsDiv.innerHTML = 'No result found.';
+    }
+}
+    </script>
+
+
+</body>
+</html>
